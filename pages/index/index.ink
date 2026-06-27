@@ -18,50 +18,35 @@
 </script>
 
 <script setup>
+// TODO: 나중에 토큰 입력 UI/저장으로 교체. 지금은 여기 한 줄만 채우면 됨.
+const TOKEN = '';
+
 export default {
   data: {
     cmd: '',
     loading: false,
-    result: '',
-    token: '',
-    tokenInput: '',
-    ready: false
+    result: ''
   },
 
   onLoad(query) {
-    let token = '';
-    try { token = wx.getStorageSync('sc_token') || ''; } catch (e) {}
     const cmd = (query && query.command) || '';
-    this.setData({ token: token, cmd: cmd, ready: !!token });
-    if (token && cmd) this.run(cmd, token);
+    this.setData({ cmd: cmd });
+    if (cmd) this.run(cmd);
   },
 
-  onTokenInput(e) {
-    this.setData({ tokenInput: (e && e.detail && e.detail.value) || '' });
-  },
-
-  saveToken() {
-    const t = (this.data.tokenInput || '').trim();
-    if (!t) return;
-    try { wx.setStorageSync('sc_token', t); } catch (e) {}
-    this.setData({ token: t, ready: true });
-    if (this.data.cmd) this.run(this.data.cmd, t);
-  },
-
-  run(cmd, token) {
+  run(cmd) {
     this.setData({ cmd: cmd, loading: true, result: '' });
     wx.request({
       url: 'https://santaclaude.app/api/glass/exec',
       method: 'POST',
       header: { 'Content-Type': 'application/json' },
-      data: { command: cmd, token: token || this.data.token },
+      data: { command: cmd, token: TOKEN },
       success: (res) => {
         const d = (res && res.data) || {};
-        const msg = d.message || d.err || '완료';
-        this.setData({ loading: false, result: msg });
+        this.setData({ loading: false, result: d.message || d.err || '완료' });
       },
       fail: () => {
-        this.setData({ loading: false, result: '⚠️ 연결 실패 — 토큰·네트워크 확인' });
+        this.setData({ loading: false, result: '⚠️ 연결 실패' });
       }
     });
   }
@@ -71,21 +56,12 @@ export default {
 <page>
   <view class="wrap">
     <text class="hd">🦌 RUDOLPH · LIVE</text>
-
-    <view ink:if="{{ !ready }}" class="setup">
-      <text class="dim">산타클로드 토큰을 넣고 연결해.</text>
-      <input class="tin" placeholder="sc_… 토큰" bindinput="onTokenInput" />
-      <button class="tbtn" bindtap="saveToken">연결</button>
+    <text class="cmd">{{ cmd || '대기 중' }}</text>
+    <view ink:if="{{ loading }}">
+      <text class="dim">⋯ 루돌프 작업 중_</text>
     </view>
-
     <view ink:else>
-      <text class="cmd">{{ cmd || '대기 중' }}</text>
-      <view ink:if="{{ loading }}">
-        <text class="dim">⋯ 루돌프 작업 중_</text>
-      </view>
-      <view ink:else>
-        <text class="ok">{{ result }}</text>
-      </view>
+      <text class="ok">{{ result }}</text>
     </view>
   </view>
 </page>
@@ -105,25 +81,6 @@ export default {
   line-height: 1.3;
   margin-bottom: 24px;
   opacity: 0.85;
-}
-.setup { display: flex; flex-direction: column; }
-.tin {
-  color: #33ff66;
-  background: #0a140d;
-  border: 1px solid #1c5;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 18px;
-  margin: 12px 0;
-}
-.tbtn {
-  color: #000;
-  background: #33ff66;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
 }
 .cmd {
   color: #8affb0;
