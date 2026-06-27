@@ -29,9 +29,9 @@ export default {
   },
 
   onLoad(query) {
-    const cmd = (query && query.command) || '';
+    const cmd = (query && query.command) || '쇼츠 뽑아';   // 테스트: 음성/입력 없이도 Run하면 자동 실행
     this.setData({ cmd: cmd });
-    if (cmd) this.run(cmd);
+    this.run(cmd);
   },
 
   run(cmd) {
